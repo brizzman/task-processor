@@ -10,5 +10,7 @@ docker-compose up -d
 # API 
 The application will be available at http://localhost:8080/swagger/
 
+
+
 ### p.s 
 There is no tests, linters, tracing etc. (
