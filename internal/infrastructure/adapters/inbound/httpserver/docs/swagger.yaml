@@ -1,0 +1,184 @@
+definitions:
+  dto.BatchCreateTasksRequest:
+    description: Request payload for batch task creation
+    properties:
+      count:
+        description: |-
+          @Description Number of tasks to create
+          @Example     5
+        minimum: 1
+        type: integer
+    required:
+    - count
+    type: object
+  dto.BatchCreateTasksResponse:
+    description: Response payload for batch task creation
+    properties:
+      ids:
+        description: '@Description List of created task IDs'
+        items:
+          type: string
+        type: array
+    type: object
+  dto.ProcessTasksRequest:
+    description: Request payload for task processing
+    properties:
+      limit:
+        description: |-
+          @Description Number of tasks to process (1-1000)
+          @Example     10
+        maximum: 1000
+        minimum: 1
+        type: integer
+      max_delay_ms:
+        description: |-
+          @Description Maximum processing delay in milliseconds
+          @Example     500
+        minimum: 0
+        type: integer
+      min_delay_ms:
+        description: |-
+          @Description Minimum processing delay in milliseconds
+          @Example     100
+        minimum: 0
+        type: integer
+      success_rate:
+        description: |-
+          @Description Success rate probability (0.0 - 1.0)
+          @Example     0.8
+        maximum: 1
+        minimum: 0
+        type: number
+    required:
+    - limit
+    - success_rate
+    type: object
+  dto.ProcessTasksResponse:
+    description: Response after task processing
+    properties:
+      failed_count:
+        description: |-
+          @Description Number of failed tasks
+          @Example     2
+        type: integer
+      processed_count:
+        description: |-
+          @Description Total number of tasks processed
+          @Example     10
+        type: integer
+      success_count:
+        description: |-
+          @Description Number of successfully processed tasks
+          @Example     8
+        type: integer
+    type: object
+  utils.HTTPResponse:
+    properties:
+      data: {}
+      errors:
+        items:
+          type: string
+        type: array
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+info:
+  contact: {}
+paths:
+  /api/v1/tasks/batch-create:
+    post:
+      consumes:
+      - application/json
+      description: Creates multiple tasks in a single operation
+      parameters:
+      - description: Tasks to create
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BatchCreateTasksRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.BatchCreateTasksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.HTTPResponse'
+      summary: Batch create tasks
+      tags:
+      - Tasks
+  /api/v1/tasks/process:
+    post:
+      consumes:
+      - application/json
+      description: Acquires and processes tasks with configurable parameters
+      parameters:
+      - description: Processing parameters
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ProcessTasksRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ProcessTasksResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/utils.HTTPResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/utils.HTTPResponse'
+      summary: Process multiple tasks
+      tags:
+      - Tasks
+  /health/live:
+    get:
+      description: Returns 200 OK if the service is alive, 503 if shutting down
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+        "503":
+          description: shutting down
+          schema:
+            type: string
+      summary: Liveness check
+      tags:
+      - Health
+  /health/ready:
+    get:
+      description: Returns 200 OK if ready, 503 if shutting down or not ready
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ready
+          schema:
+            type: string
+        "503":
+          description: shutting down / not ready
+          schema:
+            type: string
+      summary: Readiness check
+      tags:
+      - Health
+swagger: "2.0"
