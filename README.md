@@ -8,5 +8,5 @@ cd task-processor
 docker-compose up -d
 ```
 # API 
-The application will be available at http://localhost:8080
+The application will be available at http://localhost:8080/swagger
 
