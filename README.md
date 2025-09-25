@@ -1,6 +1,6 @@
 ## Quick Start
 ```
-git clone https://github.com/brizzman/task-service.git
+git clone https://github.com/brizzman/task-processor.git
 cd task-processor 
 ```
 # Start all services
