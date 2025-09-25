@@ -30,7 +30,7 @@ COPY --from=builder /app/main /app/main
 
 # Copy the wait-for-it.sh script to wait for Postgres to be ready
 COPY --from=builder /app/wait-for-it.sh /app/wait-for-it.sh
-RUN chmod +x /app/wait-for-it.sh
+RUN sed -i 's/\r$//' /app/wait-for-it.sh && chmod +x /app/wait-for-it.sh
 
 # Optionally copy the migrations directory into the container
 COPY --from=builder /app/internal/infrastructure/adapters/outbound/postgres/migrations /app/migrations
