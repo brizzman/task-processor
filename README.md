@@ -6,10 +6,13 @@ cd task-processor
 
 ## Makefile
 ```bash
-make tools # Install required tools
-make dev   # Start infrastructure
-make check # Full check (lint + security + tests), If needed
-make run   # Run the application
+make tools    # Install required tools
+make dev      # Start infrastructure
+make check    # Full check (lint + security + tests), If needed
+make run      # Run the application
+
+Ctrl + C      # Stop the application in the current terminal
+make dev-down # Stop infrastructure
 ```
 
 ## API 
