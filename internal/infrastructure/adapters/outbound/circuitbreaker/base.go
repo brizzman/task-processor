@@ -13,11 +13,11 @@ import (
 
 type BaseDecorator struct {
 	circuitBreakers map[string]*gobreaker.CircuitBreaker
-	logger          *logger.Logger
+	logger          logger.Logger
 	name            string
 }
 
-func NewBaseDecorator(cfg *config.Config, logger *logger.Logger, name string) *BaseDecorator {
+func NewBaseDecorator(cfg *config.Config, logger logger.Logger, name string) *BaseDecorator {
 	return &BaseDecorator{
 		circuitBreakers: make(map[string]*gobreaker.CircuitBreaker),
 		logger:          logger,

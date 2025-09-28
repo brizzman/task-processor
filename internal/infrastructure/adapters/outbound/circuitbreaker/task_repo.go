@@ -3,7 +3,7 @@ package circuitbreaker
 import (
 	"context"
 	"errors"
-	"task-processor/internal/application/ports/outbound/persistence"
+	"task-processor/internal/application/ports/outbound/persistence/taskrepo"
 	"task-processor/internal/domain"
 	"task-processor/internal/infrastructure/config"
 	"task-processor/internal/infrastructure/shared/logger"
@@ -13,14 +13,14 @@ import (
 )
 
 type TaskRepoDecorator struct {
-	repository persistence.TaskRepository
+	repository taskrepo.TaskRepository
 	base       *BaseDecorator
 }
 
 func NewTaskRepoDecorator(
-	repository persistence.TaskRepository,
+	repository taskrepo.TaskRepository,
 	cfg 	  *config.Config,
-	logger    *logger.Logger,
+	logger    logger.Logger,
 	name       string,
 ) *TaskRepoDecorator {
 	

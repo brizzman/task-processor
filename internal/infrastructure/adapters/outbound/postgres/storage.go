@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"task-processor/internal/application/ports/outbound/persistence"
+	"task-processor/internal/application/ports/outbound/persistence/failedtaskrepo"
+	"task-processor/internal/application/ports/outbound/persistence/taskrepo"
+	"task-processor/internal/application/ports/outbound/persistence/txmanager"
 	"task-processor/internal/infrastructure/adapters/outbound/circuitbreaker"
 	"task-processor/internal/infrastructure/adapters/outbound/postgres/txManager"
 	"task-processor/internal/infrastructure/config"
@@ -19,15 +21,15 @@ import (
 // Storage contains database connection pool and repositories
 type Storage struct {
 	pool     	  *pgxpool.Pool
-	TxManager      persistence.TxManager
-	TaskRepo  	   persistence.TaskRepository
-	FailedTaskRepo persistence.FailedTaskRepository
+	TxManager      txmanager.TxManager
+	TaskRepo  	   taskrepo.TaskRepository
+	FailedTaskRepo failedtaskrepo.FailedTaskRepository
 }
 
 // NewStorage initializes PostgreSQL storage with optional Circuit Breaker protection
 func NewStorage(
 	ctx 	context.Context,
-	logger *logger.Logger,
+	logger  logger.Logger,
 	cfg    *config.Config,
 ) (*Storage, error) {
 
@@ -72,6 +74,10 @@ func (s *Storage) HealthCheck(ctx context.Context) error {
 	return s.pool.Ping(ctx)
 }
 
+func (s *Storage) Pool() *pgxpool.Pool {
+	return s.pool
+}
+
 // Close releases all database connections and resources
 func (s *Storage) Close() {
 	if s.pool != nil {
@@ -80,7 +86,8 @@ func (s *Storage) Close() {
 }
 
 // runMigrations applies database migrations using goose
-func runMigrations(cfg *config.Config, logger *logger.Logger) error {
+func runMigrations(cfg *config.Config, logger logger.Logger) error {
+	goose.SetBaseFS(Migrations)
     db, err := sql.Open("pgx", cfg.PG.URL)
     if err != nil {
         return fmt.Errorf("failed to open sql.DB: %w", err)
@@ -91,13 +98,13 @@ func runMigrations(cfg *config.Config, logger *logger.Logger) error {
         return fmt.Errorf("failed to set goose dialect: %w", err)
     }
 
-    if err := goose.Up(db, cfg.PG.MigrationsDir); err != nil {
+    if err := goose.Up(db, "migrations"); err != nil {
         return fmt.Errorf("failed to run migrations: %w", err)
     }
 
     logger.Info("Database migrations applied successfully")
     return nil
-}
+}	
 
 // createConnectionPool establishes PostgreSQL connection pool with configured settings
 func createConnectionPool(ctx context.Context, cfg *config.Config) (*pgxpool.Pool, error) {
@@ -109,10 +116,10 @@ func createConnectionPool(ctx context.Context, cfg *config.Config) (*pgxpool.Poo
 		return nil, fmt.Errorf("failed to parse connection string: %w", err)
 	}
 
-	pgxCfg.MaxConns = int32(cfg.PG.MaxPoolSize)
-	pgxCfg.MinConns = int32(cfg.PG.MinPoolSize)
-	pgxCfg.MaxConnLifetime = cfg.PG.MaxConnLifetime
-	pgxCfg.MaxConnIdleTime = cfg.PG.MaxConnIdleTime
+	pgxCfg.MaxConns = cfg.PG.MaxPoolSize
+	pgxCfg.MinConns = cfg.PG.MinPoolSize
+	pgxCfg.MaxConnLifetime = cfg.PG.MaxConnLife
+	pgxCfg.MaxConnIdleTime = cfg.PG.MaxConnIdle
 
 	pool, err := pgxpool.NewWithConfig(ctx, pgxCfg)
 	if err != nil {
@@ -123,7 +130,7 @@ func createConnectionPool(ctx context.Context, cfg *config.Config) (*pgxpool.Poo
 }
 
 // createTaskRepository initializes task repository with optional Circuit Breaker wrapper
-func createTaskRepository(pool *pgxpool.Pool, logger *logger.Logger, cfg  *config.Config) (persistence.TaskRepository, error) {
+func createTaskRepository(pool *pgxpool.Pool, logger logger.Logger, cfg  *config.Config) (taskrepo.TaskRepository, error) {
 	baseRepo := NewTaskRepo(pool)
 
 	if cfg.CircuitBreaker.Enabled && logger != nil {
@@ -134,7 +141,7 @@ func createTaskRepository(pool *pgxpool.Pool, logger *logger.Logger, cfg  *confi
 }
 
 // createFailedTaskRepository initializes failedTask repository with optional Circuit Breaker wrapper
-func createFailedTaskRepository(pool *pgxpool.Pool, logger *logger.Logger, cfg  *config.Config) (persistence.FailedTaskRepository, error) {
+func createFailedTaskRepository(pool *pgxpool.Pool, logger logger.Logger, cfg  *config.Config) (failedtaskrepo.FailedTaskRepository, error) {
 	baseRepo := NewFailedTaskRepo(pool)
 
 	if cfg.CircuitBreaker.Enabled && logger != nil {

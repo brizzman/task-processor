@@ -37,8 +37,10 @@ func (tm *TxManager) WithTransaction(ctx context.Context, fn func(ctx context.Co
 	if err != nil {
 		return fmt.Errorf("begin transaction: %w", err)
 	}
-    defer tx.Rollback(ctx)
-
+	defer func() {
+		_ = tx.Rollback(ctx)
+	}()
+	
 	ctx = context.WithValue(ctx, ctxTxKey{}, tx)
 
 	if err := fn(ctx); err != nil {

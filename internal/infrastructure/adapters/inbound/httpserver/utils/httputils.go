@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/go-playground/validator/v10"
+	"task-processor/internal/infrastructure/shared/validator"
 )
-
-var validate = validator.New()
 
 type HTTPResponse struct {
 	Success bool        `json:"success"`
@@ -20,7 +18,7 @@ func SendSuccess(w http.ResponseWriter, r *http.Request, data any, statusCode in
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	
-	json.NewEncoder(w).Encode(HTTPResponse{
+	_  = json.NewEncoder(w).Encode(HTTPResponse{
 		Success: true,
 		Data:    data,
 	})
@@ -30,32 +28,21 @@ func SendError(w http.ResponseWriter, r *http.Request, message string, statusCod
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	
-	json.NewEncoder(w).Encode(HTTPResponse{
+	_ = json.NewEncoder(w).Encode(HTTPResponse{
 		Success: false,
 		Message: message,
 	})
 }
 
-func SendValidationError(w http.ResponseWriter, r *http.Request, err error) {
-	var errors []string
-	if validationErrors, ok := err.(validator.ValidationErrors); ok {
-		for _, e := range validationErrors {
-			errors = append(errors, e.Error())
-		}
-	} else {
-		errors = append(errors, err.Error())
-	}
+func SendValidationError(w http.ResponseWriter, r *http.Request, v *validator.Validator, err error) {
+	errors := v.ValidationErrorsToStrings(err)
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusBadRequest)
 	
-	json.NewEncoder(w).Encode(HTTPResponse{
+	_ = json.NewEncoder(w).Encode(HTTPResponse{
 		Success: false,
 		Message: "Validation failed",
 		Errors:  errors,
 	})
-}
-
-func ValidateStruct(s any) error {
-	return validate.Struct(s)
 }

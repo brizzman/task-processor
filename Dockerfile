@@ -22,19 +22,19 @@ FROM alpine:latest
 
 WORKDIR /app
 
-# Install required packages: bash for scripts and PostgreSQL client for migrations/testing
+# Install bash and PostgreSQL client
 RUN apk add --no-cache bash postgresql-client
 
-# Copy the built Go binary from the builder stage
+# Copy the built Go binary
 COPY --from=builder /app/main /app/main
 
-# Copy the wait-for-it.sh script to wait for Postgres to be ready
-COPY --from=builder /app/wait-for-it.sh /app/wait-for-it.sh
+# Copy scripts from ./scripts
+COPY --from=builder /app/scripts/wait-for-it.sh /app/wait-for-it.sh
+COPY --from=builder /app/scripts/entrypoint.sh /app/entrypoint.sh
+
+# Make scripts executable and fix line endings
 RUN sed -i 's/\r$//' /app/wait-for-it.sh && chmod +x /app/wait-for-it.sh
+RUN sed -i 's/\r$//' /app/entrypoint.sh && chmod +x /app/entrypoint.sh
 
-# Optionally copy the migrations directory into the container
-COPY --from=builder /app/internal/infrastructure/adapters/outbound/postgres/migrations /app/migrations
-
-# Start the application, waiting for Postgres to be ready first
-# Assumes environment variables PG_HOST=postgres, PG_PORT=5432
-CMD ["/app/wait-for-it.sh", "postgres:5432", "--timeout=30", "--strict", "--", "/app/main"]
+# Use the wrapper script as entrypoint
+ENTRYPOINT ["/app/entrypoint.sh"]

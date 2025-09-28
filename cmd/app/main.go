@@ -9,12 +9,14 @@ import (
 	"syscall"
 	"task-processor/internal/application/usecases/task"
 	"task-processor/internal/infrastructure/adapters/inbound/httpserver"
-	"task-processor/internal/infrastructure/adapters/inbound/taskprocessor"
+	"task-processor/internal/infrastructure/adapters/inbound/random"
+	"task-processor/internal/infrastructure/adapters/inbound/tasksprocessor"
 	"task-processor/internal/infrastructure/adapters/outbound/postgres"
 	"task-processor/internal/infrastructure/adapters/outbound/redis"
 	"task-processor/internal/infrastructure/config"
 	"task-processor/internal/infrastructure/constructor"
 	"task-processor/internal/infrastructure/shared/logger"
+	"task-processor/internal/infrastructure/shared/validator"
 	"time"
 
 	"github.com/gammazero/workerpool"
@@ -23,8 +25,7 @@ import (
 	"go.uber.org/zap"
 
 	_ "task-processor/internal/infrastructure/adapters/inbound/httpserver/docs"
-
-	_ "go.uber.org/automaxprocs"
+	// _ "go.uber.org/automaxprocs" - It works only for Unix
 )
 
 
@@ -66,29 +67,35 @@ func runApp() error {
 	}
 	defer rdb.Close()
 
+	// --- Init task usecases ---
+	taskUseCases := task.NewUseCases(
+		store.TaskRepo,
+		store.FailedTaskRepo,
+		store.TxManager,
+		random.NewCryptoRandomProvider(),
+	)
+
 	// --  Init worker pool ---
 	wp := workerpool.New(cfg.WorkerPool.MaxWorkers)
 	defer wp.StopWait()
 
-	// --- Init task processor ---
-	taskProcessor := taskprocessor.NewConcurrentTaskProcessor(log, store, wp)
-	
-	// --- Init usecases ---
-	taskCreator := task.NewTaskCreator(store.TaskRepo)
+	// --- Init concurrent tasks processor ---
+	ccTasksProcessor := tasksprocessor.NewConcurrentTasksProcessor(log, wp, taskUseCases)
 
 	// --- Init & Construct chi-router ---
 	router := chi.NewRouter()
 	constructorDeps := constructor.Dependencies{
 		Infra: constructor.InfraDeps{
-			Logger: log,
-			Config: cfg,
-			PG:     store,
-			Redis:  rdb.Client(),
+			Logger:    log,
+			Config:    cfg,
+			PG:        store,
+			Redis:     rdb.Client(),
+			Validator: validator.New(),
 		},
 		App: constructor.AppDeps{
-			TaskProcessor:   taskProcessor,
-			TaskCreator: 	 taskCreator,
-			IsShuttingDown: &isShuttingDown,
+			TaskUseCases: 	 taskUseCases,
+			TasksProcessor:  ccTasksProcessor,
+			IsShuttingDown:  &isShuttingDown,
 		},
 	}
 	constructor.Construct(router, constructorDeps)

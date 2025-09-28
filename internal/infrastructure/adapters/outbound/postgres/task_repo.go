@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"task-processor/internal/application/ports/outbound/persistence"
+	"task-processor/internal/application/ports/outbound/persistence/taskrepo"
 	"task-processor/internal/domain"
 	"task-processor/internal/infrastructure/adapters/outbound/postgres/txManager"
 
@@ -13,13 +13,15 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+var ErrTaskNotFound = errors.New("task not found")
+
 // TaskRepo implements persistence.TaskRepository
 type TaskRepo struct {
 	pool *pgxpool.Pool
 }
 
 // NewTaskRepo creates new repository instance
-func NewTaskRepo(pool *pgxpool.Pool) persistence.TaskRepository {
+func NewTaskRepo(pool *pgxpool.Pool) taskrepo.TaskRepository {
 	return &TaskRepo{pool: pool}
 }
 
@@ -44,23 +46,23 @@ func (r *TaskRepo) BatchCreate(ctx context.Context, tasks []*domain.Task) ([]uui
 	defer results.Close()
 
 	ids := make([]uuid.UUID, 0, len(tasks))
-	var failed int
+	var errs []error
 
 	for i := 0; i < len(tasks); i++ {
 		var id uuid.UUID
 		if err := results.QueryRow().Scan(&id); err != nil {
-			failed++
+			errs = append(errs, fmt.Errorf("task %d: %w", i, err))
 			continue
 		}
 		ids = append(ids, id)
 	}
 
-	if failed == len(tasks) {
-		return nil, fmt.Errorf("failed to insert any tasks")
+	if len(ids) == 0 {
+		return nil, fmt.Errorf("failed to insert tasks: %w", errors.Join(errs...))
 	}
 
-	if failed > 0 {
-		return ids, fmt.Errorf("inserted %d out of %d tasks", len(ids), len(tasks))
+	if len(errs) > 0 {
+		return ids, fmt.Errorf("inserted %d out of %d tasks, errors: %v", len(ids), len(tasks), errs)
 	}
 
 	return ids, nil
@@ -74,8 +76,7 @@ func (r *TaskRepo) AcquireTasks(ctx context.Context, limit int) ([]*domain.Task,
 		UPDATE tasks 
 		SET 
 			status = $1,
-			attempts = attempts + 1,
-			updated_at = NOW()
+			attempts = attempts + 1
 		WHERE id IN (
 			SELECT id FROM tasks 
 			WHERE status IN ($2, $3) 
@@ -139,15 +140,14 @@ func (r *TaskRepo) MarkAsProcessed(ctx context.Context, taskID uuid.UUID) error 
 	
 	tag, err := querier.Exec(ctx, `
 		UPDATE tasks
-		SET status = $1,
-		    updated_at = NOW()
+		SET status = $1
 		WHERE id = $2
 	`, domain.StatusProcessed, taskID)
 	if err != nil {
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.New("task not found")
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -159,7 +159,6 @@ func (r *TaskRepo) MarkAsFailed(ctx context.Context, taskID uuid.UUID, errorMsg 
 	tag, err := querier.Exec(ctx, `
 		UPDATE tasks
 		SET status = $1,
-		    updated_at = NOW(),
 		    error_message = $2
 		WHERE id = $3
 	`, domain.StatusFailed, errorMsg, taskID)
@@ -167,7 +166,7 @@ func (r *TaskRepo) MarkAsFailed(ctx context.Context, taskID uuid.UUID, errorMsg 
 		return err
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.New("task not found")
+		return ErrTaskNotFound
 	}
 	return nil
 }
@@ -181,7 +180,7 @@ func (r *TaskRepo) Delete(ctx context.Context, taskID uuid.UUID) error {
 		return fmt.Errorf("failed to delete task: %w", err)
 	}
 	if tag.RowsAffected() == 0 {
-		return errors.New("task not found")
+		return ErrTaskNotFound
 	}
 	return nil
 }

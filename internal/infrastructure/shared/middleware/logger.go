@@ -9,7 +9,7 @@ import (
 	"go.uber.org/zap"
 )
 
-func LoggerMiddleware(logger *logger.Logger) func(next http.Handler) http.Handler {
+func LoggerMiddleware(logger logger.Logger) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()

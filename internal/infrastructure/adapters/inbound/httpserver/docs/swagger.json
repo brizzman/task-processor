@@ -186,9 +186,9 @@
             ],
             "properties": {
                 "limit": {
-                    "description": "@Description Number of tasks to process (1-1000)\n@Example     10",
+                    "description": "@Description Number of tasks to process (1-50)\n@Example     10",
                     "type": "integer",
-                    "maximum": 1000,
+                    "maximum": 50,
                     "minimum": 1
                 },
                 "max_delay_ms": {

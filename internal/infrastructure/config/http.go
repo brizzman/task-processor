@@ -3,8 +3,8 @@ package config
 import "time"
 
 type HTTP struct {
-	Port         string        `yaml:"port"`
-	ReadTimeout  time.Duration `yaml:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout"`
-	IdleTimeout  time.Duration `yaml:"idle_timeout"`
+	Port         string        `envconfig:"HTTP_PORT"`
+	ReadTimeout  time.Duration `envconfig:"HTTP_READ_TIMEOUT"`
+	WriteTimeout time.Duration `envconfig:"HTTP_WRITE_TIMEOUT"`
+	IdleTimeout  time.Duration `envconfig:"HTTP_IDLE_TIMEOUT"`
 }

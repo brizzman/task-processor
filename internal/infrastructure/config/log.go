@@ -1,5 +1,5 @@
 package config
 
 type Log struct {
-	Level string `yaml:"level"`
+	Level string `envconfig:"LOG_LEVEL"`
 }

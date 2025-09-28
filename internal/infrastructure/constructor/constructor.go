@@ -3,7 +3,7 @@ package constructor
 import (
 	"net/http"
 	"sync/atomic"
-	proc "task-processor/internal/application/ports/inbound/task"
+	"task-processor/internal/application/ports/inbound/tasksprocessor"
 	"task-processor/internal/application/usecases/task"
 	"task-processor/internal/infrastructure/adapters/inbound/httpserver/health"
 	"task-processor/internal/infrastructure/adapters/inbound/httpserver/swagger"
@@ -12,6 +12,7 @@ import (
 	"task-processor/internal/infrastructure/config"
 	"task-processor/internal/infrastructure/shared/logger"
 	mdlware "task-processor/internal/infrastructure/shared/middleware"
+	"task-processor/internal/infrastructure/shared/validator"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,16 +21,17 @@ import (
 
 // InfraDeps contains low-level infrastructure dependencies
 type InfraDeps struct {
-	Logger  *logger.Logger
-	Config  *config.Config
-	PG      *postgres.Storage
-	Redis   *redis.Client 
+	Logger  	    logger.Logger
+	Config  	   *config.Config
+	PG     		   *postgres.Storage
+	Redis   	   *redis.Client 
+	Validator      *validator.Validator
 }
 
 // AppDeps contains application-level services
 type AppDeps struct {
-	TaskProcessor   proc.TaskProcessor
-	TaskCreator    *task.TaskCreator
+	TaskUseCases   *task.UseCases
+	TasksProcessor  tasksprocessor.TasksProcessor
 	IsShuttingDown *atomic.Bool
 }
 
@@ -54,8 +56,6 @@ func registerMiddleware(router *chi.Mux, deps Dependencies) {
 		mdlware.NewRedisRateLimiter(
 			deps.Infra.Redis,
 			deps.Infra.Config.RateLimit.RPS,
-			deps.Infra.Config.RateLimit.Burst,
-			deps.Infra.Config.RateLimit.Period,
 		).Middleware,
 	}
 
@@ -78,7 +78,11 @@ func registerHealthController(router *chi.Mux, deps Dependencies) {
 }
 
 func registerTaskController(router *chi.Mux, deps Dependencies) {
-	taskController := tsk.NewController(deps.App.TaskProcessor, deps.App.TaskCreator)
+	taskController := tsk.NewController(
+		deps.Infra.Validator, 
+		deps.App.TasksProcessor, 
+		deps.App.TaskUseCases,
+	)
 	taskController.RegisterRoutes(router)
 }
 

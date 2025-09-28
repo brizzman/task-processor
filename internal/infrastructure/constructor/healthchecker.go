@@ -12,14 +12,14 @@ import (
 type HealthChecker struct {
 	pg     	*postgres.Storage
 	redis  	*redis.Client
-	log    	*logger.Logger
+	log    	 logger.Logger
 	timeout  time.Duration
 }
 
 func NewHealthChecker(
 	pg 		*postgres.Storage, 
 	redis 	*redis.Client, 
-	log 	*logger.Logger,
+	log 	 logger.Logger,
 	timeout  time.Duration,
 ) *HealthChecker {
 	return &HealthChecker{

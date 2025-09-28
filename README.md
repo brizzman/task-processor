@@ -3,13 +3,17 @@
 git clone https://github.com/brizzman/task-processor.git
 cd task-processor 
 ```
-# Start all services
+# Install required tools
+```bash
+make tools
 ```
-docker-compose up -d
+
+# Start infrastructure
+```bash
+make dev 
 ```
+
+# 
+
 # API 
 The application will be available at http://localhost:8080/swagger/
-<br>
-### p.s 
-There is no tests, linters, tracing etc. I'm lazy ( 
-

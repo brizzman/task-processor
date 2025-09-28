@@ -3,11 +3,11 @@ package config
 import "time"
 
 type Redis struct {
-	Address      string        `yaml:"address"`
-	Password     string        `yaml:"password"`
-	DB           int           `yaml:"db"`
-	PoolSize     int           `yaml:"pool_size"`
-	DialTimeout  time.Duration `yaml:"dial_timeout"`
-	ReadTimeout  time.Duration `yaml:"read_timeout"`
-	WriteTimeout time.Duration `yaml:"write_timeout"`
+	Address      string        `envconfig:"REDIS_ADDRESS"`
+	Password     string        `envconfig:"REDIS_PASSWORD"`
+	DB           int           `envconfig:"REDIS_DB"`
+	PoolSize     int           `envconfig:"REDIS_POOL_SIZE"`
+	DialTimeout  time.Duration `envconfig:"REDIS_DIAL_TIMEOUT"`
+	ReadTimeout  time.Duration `envconfig:"REDIS_READ_TIMEOUT"`
+	WriteTimeout time.Duration `envconfig:"REDIS_WRITE_TIMEOUT"`
 }

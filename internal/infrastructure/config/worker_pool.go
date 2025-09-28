@@ -1,5 +1,5 @@
 package config
 
 type WorkerPool struct {
-	MaxWorkers int `yaml:"max_workers"`
+	MaxWorkers int `envconfig:"WORKER_POOL_MAX_WORKERS"`
 }

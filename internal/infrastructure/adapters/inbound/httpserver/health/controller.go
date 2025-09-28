@@ -37,11 +37,11 @@ func (h *Controller) RegisterRoutes(router chi.Router) {
 func (h *Controller) Liveness(w http.ResponseWriter, r *http.Request) {
 	if h.isShuttingDown.Load() {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("shutting down"))
+		_, _ = w.Write([]byte("shutting down"))
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	_, _ = w.Write([]byte("ok"))
 }
 
 // Readiness check - verifies if the service is ready to accept traffic
@@ -56,18 +56,18 @@ func (h *Controller) Liveness(w http.ResponseWriter, r *http.Request) {
 func (h *Controller) Readiness(w http.ResponseWriter, r *http.Request) {
 	if h.isShuttingDown.Load() {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("shutting down"))
+		_, _ = w.Write([]byte("shutting down"))
 		return
 	}
 
 	// Additional readiness checks (DB, cache, etc.)
 	if h.readyCheck != nil && !h.readyCheck() {
 		w.WriteHeader(http.StatusServiceUnavailable)
-		w.Write([]byte("not ready"))
+		_, _ = w.Write([]byte("not ready"))
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ready"))
+	_, _ = w.Write([]byte("ready"))
 }
 

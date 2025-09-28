@@ -3,7 +3,7 @@ package config
 import "time"
 
 type Shutdown struct {
-	HTTPTimeout    time.Duration `yaml:"http_timeout"`
-	HardPeriod     time.Duration `yaml:"hard_period"`
-	ReadinessDrain time.Duration `yaml:"readiness_drain"`
+	HTTPTimeout    time.Duration `envconfig:"SHUTDOWN_HTTP_TIMEOUT"`
+	HardPeriod     time.Duration `envconfig:"SHUTDOWN_HARD_PERIOD"`
+	ReadinessDrain time.Duration `envconfig:"SHUTDOWN_READINESS_DRAIN"`
 }

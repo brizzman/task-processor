@@ -1,64 +1,48 @@
 package logger
 
 import (
-	"os"
-	"task-processor/internal/infrastructure/config"
-	"sync"
-
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
-type Logger struct {
-	*zap.Logger
+
+// Logger is an interface for structured logging
+type Logger interface {
+    // Debug logs a message at Debug level
+    Debug(msg string, fields ...Field)
+    // Info logs a message at Info level
+    Info(msg string, fields ...Field)
+    // Warn logs a message at Warn level
+    Warn(msg string, fields ...Field)
+    // Error logs a message at Error level
+    Error(msg string, fields ...Field)
+    // Fatal logs a message at Fatal level and terminates the program
+    Fatal(msg string, fields ...Field)
+    // Panic logs a message at Panic level and calls panic
+    Panic(msg string, fields ...Field)
+
+    // With creates a new logger with additional fields
+    With(fields ...Field) Logger
+    // Named adds a name to the logger
+    Named(name string) Logger
+
+    // Sync flushes any buffered log entries (used at program exit)
+    Sync() error
 }
 
+// Field represents a field for structured logging
+type Field = zap.Field
+
+// Constants for creating fields (re-exported from zap)
 var (
-	logger Logger
-	once   sync.Once
+    String   = zap.String
+    Int      = zap.Int
+    Int32    = zap.Int32
+    Int64    = zap.Int64
+    Float32  = zap.Float32
+    Float64  = zap.Float64
+    Bool     = zap.Bool
+    Any      = zap.Any
+    Error    = zap.Error
+    Time     = zap.Time
+    Duration = zap.Duration
 )
-
-func GetLogger() *Logger {
-	once.Do(func() {
-		cfg := config.GetConfig()
-
-		// Set log level from config
-		var level zapcore.Level
-		switch cfg.Log.Level {
-		case "debug":
-			level = zap.DebugLevel
-		case "info":
-			level = zap.InfoLevel
-		case "warn", "warning":
-			level = zap.WarnLevel
-		case "err", "error":
-			level = zap.ErrorLevel
-		case "fatal":
-			level = zap.FatalLevel
-		case "panic":
-			level = zap.PanicLevel
-		default:
-			level = zap.InfoLevel
-		}
-
-		// Configure JSON encoder (better for log aggregation systems like Loki/ELK)
-		encoderCfg := zap.NewProductionEncoderConfig()
-		encoderCfg.TimeKey = "ts"
-		encoderCfg.EncodeTime = zapcore.ISO8601TimeEncoder
-		encoderCfg.LevelKey = "level"
-		encoderCfg.MessageKey = "msg"
-		encoderCfg.CallerKey = "caller"
-
-		core := zapcore.NewCore(
-			zapcore.NewJSONEncoder(encoderCfg),
-			zapcore.Lock(os.Stderr),
-			level,
-		)
-
-		zapLogger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
-
-		logger = Logger{zapLogger}
-	})
-
-	return &logger
-}

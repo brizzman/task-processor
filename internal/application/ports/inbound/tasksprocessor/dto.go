@@ -1,4 +1,4 @@
-package task
+package tasksprocessor
 
 type ProcessTasksRequest struct {
 	// Limit defines the maximum number of tasks to acquire and process.

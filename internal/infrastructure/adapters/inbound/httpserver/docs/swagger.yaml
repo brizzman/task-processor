@@ -25,9 +25,9 @@ definitions:
     properties:
       limit:
         description: |-
-          @Description Number of tasks to process (1-1000)
+          @Description Number of tasks to process (1-50)
           @Example     10
-        maximum: 1000
+        maximum: 50
         minimum: 1
         type: integer
       max_delay_ms:

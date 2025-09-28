@@ -1,9 +1,9 @@
 package dto
 
 import (
-	"task-processor/internal/application/ports/inbound/task"
-
+	"task-processor/internal/application/ports/inbound/tasksprocessor"
 	"github.com/google/uuid"
+
 )
 
 // @Description Response after task processing
@@ -22,7 +22,7 @@ type ProcessTasksResponse struct {
 }
 
 // FromDomain converts domain response to HTTP DTO
-func FromDomainProcess(domainResponse *task.ProcessTasksResponse) *ProcessTasksResponse {
+func FromDomainProcess(domainResponse *tasksprocessor.ProcessTasksResponse) *ProcessTasksResponse {
 	return &ProcessTasksResponse{
 		ProcessedCount: domainResponse.ProcessedCount,
 		SuccessCount:   domainResponse.SuccessCount,
@@ -33,12 +33,15 @@ func FromDomainProcess(domainResponse *task.ProcessTasksResponse) *ProcessTasksR
 // @Description Response payload for batch task creation
 type BatchCreateTasksResponse struct {
 	// @Description List of created task IDs
-	IDs []uuid.UUID `json:"ids"`
+	IDs []string  `json:"ids"`
 }
 
-// FromDomain converts domain response to HTTP DTO
 func FromDomainBatchCreate(ids []uuid.UUID) *BatchCreateTasksResponse {
-	return &BatchCreateTasksResponse{
-		IDs: ids,
-	}
+    strIDs := make([]string, len(ids))
+    for i, id := range ids {
+        strIDs[i] = id.String()
+    }
+    return &BatchCreateTasksResponse{
+        IDs: strIDs,
+    }
 }

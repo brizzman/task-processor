@@ -1,10 +1,9 @@
-package persistence
+package failedtaskrepo
 
 import (
 	"context"
 	"task-processor/internal/domain"
 )
-
 
 // FailedTaskRepository defines the interface for failed task data access operations
 type FailedTaskRepository interface {

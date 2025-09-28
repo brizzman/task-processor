@@ -4,25 +4,32 @@ import (
 	"encoding/json"
 	"net/http"
 
-	proc "task-processor/internal/application/ports/inbound/task"
+	"task-processor/internal/application/ports/inbound/tasksprocessor"
 	"task-processor/internal/application/usecases/task"
 	"task-processor/internal/infrastructure/adapters/inbound/httpserver/task/dto"
 	"task-processor/internal/infrastructure/adapters/inbound/httpserver/utils"
+	"task-processor/internal/infrastructure/shared/validator"
 
 	"github.com/go-chi/chi/v5"
 )
 
 // Controller handles HTTP requests for task processing
 type Controller struct {
-	taskProcessor  proc.TaskProcessor
-	taskCreator   *task.TaskCreator
+	Validator      *validator.Validator
+	TasksProcessor  tasksprocessor.TasksProcessor
+	TaskUseCases   *task.UseCases
 }
 
 // NewController creates a new task controller
-func NewController(taskProcessor proc.TaskProcessor, taskCreator *task.TaskCreator) *Controller {
+func NewController(
+	Validator 	   *validator.Validator,
+	TasksProcessor  tasksprocessor.TasksProcessor,
+	TaskUseCases   *task.UseCases,	
+) *Controller {
 	return &Controller{
-		taskProcessor: taskProcessor,
-		taskCreator:   taskCreator,
+		Validator:      Validator,
+		TasksProcessor: TasksProcessor,
+		TaskUseCases:   TaskUseCases,
 	}
 }
 
@@ -53,8 +60,8 @@ func (c *Controller) ProcessTasksHandler(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Validate request
-	if err := utils.ValidateStruct(req); err != nil {
-		utils.SendValidationError(w, r, err)
+	if err := c.Validator.ValidateStruct(req); err != nil {
+		utils.SendValidationError(w, r, c.Validator, err)
 		return
 	}
 
@@ -62,7 +69,7 @@ func (c *Controller) ProcessTasksHandler(w http.ResponseWriter, r *http.Request)
 	domainReq := req.ToDomainProcess()
 
 	// Process tasks
-	response, err := c.taskProcessor.ProcessTasks(r.Context(), domainReq)
+	response, err := c.TasksProcessor.ProcessTasks(r.Context(), domainReq)
 	if err != nil {
 		utils.SendError(w, r, "Processing failed", http.StatusInternalServerError)
 		return
@@ -92,17 +99,17 @@ func (c *Controller) BatchCreateHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := utils.ValidateStruct(req); err != nil {
-		utils.SendValidationError(w, r, err)
+	if err := c.Validator.ValidateStruct(req); err != nil {
+		utils.SendValidationError(w, r, c.Validator, err)
 		return
 	}
 
-	ids, err := c.taskCreator.CreateTasksBatch(r.Context(), req.Count)
+	ids, err := c.TaskUseCases.Creator.CreateTasksBatch(r.Context(), req.Count)
 	if err != nil {
 		utils.SendError(w, r, "Failed to create tasks", http.StatusInternalServerError)
 		return
 	}
-
+	
 	httpResponse := dto.FromDomainBatchCreate(ids)
 
 	utils.SendSuccess(w, r, httpResponse, http.StatusOK)

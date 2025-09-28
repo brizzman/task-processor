@@ -2,7 +2,7 @@ package circuitbreaker
 
 import (
 	"context"
-	"task-processor/internal/application/ports/outbound/persistence"
+	"task-processor/internal/application/ports/outbound/persistence/failedtaskrepo"
 	"task-processor/internal/domain"
 	"task-processor/internal/infrastructure/config"
 	"task-processor/internal/infrastructure/shared/logger"
@@ -10,14 +10,14 @@ import (
 )
 
 type FailedTaskRepoDecorator struct {
-	repository persistence.FailedTaskRepository
+	repository failedtaskrepo.FailedTaskRepository
 	base       *BaseDecorator
 }
 
 func NewFailedTaskRepoDecorator(
-	repository persistence.FailedTaskRepository,
+	repository failedtaskrepo.FailedTaskRepository,
 	cfg *config.Config,
-	logger *logger.Logger,
+	logger logger.Logger,
 	name string,
 ) *FailedTaskRepoDecorator {
 	

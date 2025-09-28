@@ -1,33 +1,35 @@
 package config
 
 import (
+	"fmt"
 	"sync"
-	"github.com/ilyakaznacheev/cleanenv"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	App            App            `yaml:"app"`
-	HTTP           HTTP           `yaml:"http"`
-	Log            Log            `yaml:"log"`
-	PG             PG             `yaml:"postgres"`
-	Shutdown       Shutdown       `yaml:"shutdown"`
-	WorkerPool     WorkerPool     `yaml:"worker_pool"`
-	RateLimit      RateLimit      `yaml:"rate_limit"`
-	Redis          Redis          `yaml:"redis"`
-	HealthCheck    HealthCheck    `yaml:"healthcheck"`
-	CircuitBreaker CircuitBreaker `yaml:"circuit_breaker"`
+	App            App
+	HTTP           HTTP
+	Log            Log
+	PG             PG
+	Shutdown       Shutdown
+	WorkerPool     WorkerPool
+	RateLimit      RateLimit
+	Redis          Redis
+	HealthCheck    HealthCheck
+	CircuitBreaker CircuitBreaker
 }
 
 var (
 	instance *Config
- 	once sync.Once
+	once     sync.Once
 )
 
 func GetConfig() *Config {
 	once.Do(func() {
 		instance = &Config{}
-		if err := cleanenv.ReadConfig("config-local.yaml", instance); err != nil {
-			panic(err)
+		if err := envconfig.Process("", instance); err != nil {
+			panic(fmt.Sprintf("Failed to load env config: %s", err))
 		}
 	})
 	return instance
