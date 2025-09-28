@@ -12,6 +12,6 @@ make check # Full check (lint + security + tests), If needed
 make run   # Run the application
 ```
 
-# API 
+## API 
 The application will be available at http://localhost:8080/swagger/
 
