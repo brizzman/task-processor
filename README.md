@@ -1,19 +1,17 @@
 ## Quick Start
-```
+```bash
 git clone https://github.com/brizzman/task-processor.git
-cd task-processor 
+cd task-processor
 ```
-# Install required tools
+
+## Makefile
 ```bash
-make tools
+make tools # Install required tools
+make dev   # Start infrastructure
+make check # Full check (lint + security + tests), If needed
+make run   # Run the application
 ```
 
-# Start infrastructure
-```bash
-make dev 
-```
-
-# 
-
-# API 
+## API 
 The application will be available at http://localhost:8080/swagger/
+
