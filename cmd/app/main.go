@@ -48,11 +48,12 @@ func runApp() error {
 	ongoingCtx, stopOngoing := context.WithCancel(context.Background())
 	defer stopOngoing()
 	
-	// --- Init config & logger ---
+	// --- Init Config & Logger ---
 	cfg := config.GetConfig()
 	
 	log := logger.GetLogger()
 	
+	// --- Init Postgres & Redis ---
 	log.Info("initializing postgresql storage")
 	store, err := postgres.NewStorage(rootCtx, log, cfg)
 	if err != nil {
