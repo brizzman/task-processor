@@ -171,6 +171,7 @@ const docTemplate = `{
                 "count": {
                     "description": "@Description Number of tasks to create\n@Example     5",
                     "type": "integer",
+                    "maximum": 50,
                     "minimum": 1
                 }
             }

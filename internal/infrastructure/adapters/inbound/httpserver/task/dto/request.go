@@ -14,7 +14,7 @@ type ProcessTasksRequest struct {
 	
 	// @Description Maximum processing delay in milliseconds
 	// @Example     500
-	MaxDelayMS int `json:"max_delay_ms" validate:"min=0"`
+	MaxDelayMS int `json:"max_delay_ms" validate:"min=0,gtefield=MinDelayMS"`
 	
 	// @Description Success rate probability (0.0 - 1.0)
 	// @Example     0.8
