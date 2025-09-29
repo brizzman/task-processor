@@ -6,7 +6,7 @@ import "task-processor/internal/application/ports/inbound/tasksprocessor"
 type ProcessTasksRequest struct {
 	// @Description Number of tasks to process (1-50)
 	// @Example     10
-	Limit int `json:"limit" validate:"required,min=1,max=50"`
+	Limit int `json:"limit" validate:"min=1,max=50"`
 	
 	// @Description Minimum processing delay in milliseconds
 	// @Example     100
@@ -18,7 +18,7 @@ type ProcessTasksRequest struct {
 	
 	// @Description Success rate probability (0.0 - 1.0)
 	// @Example     0.8
-	SuccessRate float64 `json:"success_rate" validate:"required,min=0,max=1"`
+	SuccessRate float64 `json:"success_rate" validate:"min=0,max=1"`
 }
 
 // ToDomain converts HTTP DTO to domain request
